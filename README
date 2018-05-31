@@ -1,0 +1,35 @@
+Procedure
+1, Answer questions in questions.input file
+   If your answer is "Yes", put 1.
+   If your answer is "No", put 0.
+
+   Example input file format is as follows
+   1 Q1
+   1 Q2
+   0 Q3
+   1 Q4
+   1 Q5
+
+2, Run __init__.py file with a following command 
+	python3 __init__.py
+
+3, Result is shown in your command line
+   
+   Example result is as follows.
+   Input
+   Q1
+    Yes
+   Q2
+    Yes
+   Q3
+    No
+   Q4
+    Yes
+   Q5
+    Yes
+   Output
+   Opinion Changed!
+
+Note
+Python3.4.2 is used for this project.
+Git hub repository is "https://github.com/kameturtle/CS6795-project1.git"
