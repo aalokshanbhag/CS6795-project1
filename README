@@ -33,3 +33,4 @@ Procedure
 Note
 Python3.4.2 is used for this project.
 Git hub repository is "https://github.com/kameturtle/CS6795-project1.git"
+As a first step, we develop a decision tree. But until the 2nd version submission, we change the code in such a way that it execute rules as actual human brain does.
