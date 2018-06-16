@@ -1,5 +1,6 @@
 import sys
 import queue as queue
+import pandas as pd
 
 class status:
     def __init__(self, confidence_level, attention_level, interest_level, opinion):
@@ -10,30 +11,34 @@ class status:
         self.iLevel = interest_level   # low(0), mid(1), high(2)
         
     def change(self, rule):
-        self.opinion = self.opinion + rule.oRate
-        if self.opinion > 2:
-            self.opinion = 2
-        if self.opinion < -2:
-            self.opinion = -2
-        self.cLevel = self.cLevel + rule.cRate
-        if self.cLevel > 2:
-            self.cLevel = 2
-        if self.cLevel < 0:
-            self.cLevel = 0
-        self.aLevel = self.aLevel + rule.aRate
-        if self.aLevel > 2:
-            self.aLevel = 2
-        if self.aLevel < 0:
-            self.aLevel = 0
-        self.iLevel = self.iLevel + rule.iRate
-        if self.iLevel > 2:
-            self.iLevel = 2
-        if self.iLevel < 0:
-            self.iLevel = 0
+        if rule.oRate != None:
+            self.opinion = self.opinion + rule.oRate
+            if self.opinion > 2:
+                self.opinion = 2
+            if self.opinion < -2:
+                self.opinion = -2
+        if rule.cRate != None:
+            self.cLevel = self.cLevel + rule.cRate
+            if self.cLevel > 2:
+                self.cLevel = 2
+            if self.cLevel < 0:
+                self.cLevel = 0
+        if rule.aRate != None:
+            self.aLevel = self.aLevel + rule.aRate
+            if self.aLevel > 2:
+                self.aLevel = 2
+            if self.aLevel < 0:
+                self.aLevel = 0
+        if rule.iRate != None:
+            self.iLevel = self.iLevel + rule.iRate
+            if self.iLevel > 2:
+                self.iLevel = 2
+            if self.iLevel < 0:
+                self.iLevel = 0
         
     def check(self):
-        if (self.opinion > 0 and self.initOpinion < 0) or \
-        (self.opinion < 0 and self.initOpinion > 0) or \
+        if (self.opinion >= 0 and self.initOpinion < 0) or \
+        (self.opinion <= 0 and self.initOpinion > 0) or \
         (self.opinion != 0 and self.initOpinion == 0):
             return "Opinion Changed!"
         return "Stick to the original opinion..."
@@ -49,7 +54,7 @@ class status:
 class env:
     def __init__(self, q1, q2, q3, q4, q5):
         self.q1 = q1 #q1. Does the article have a bias? (yes, no, cantSay)
-        self.q2 = q2 #q2. Which comments did you read? (every, sortedByLikes, sampledBothSidesOfArgument, unsorted, never)
+        self.q2 = q2 #q2. Which comments did you read? (all, sortedByLikes, sampledBothSidesOfArgument, unsorted, never)
         self.q3 = q3 #q3. Are the comments offensive? (notAtAll, little, neutral, quite, very)
         self.q4 = q4 #q4. Which way is the comment section leaning (stronglyAgainstYou, againstYou, neutral, withYou, stronglyWithYou)
         self.q5 = q5 #q5. Are the comments well reasoned ? (notAtAll, little, neutral, quite, very)
@@ -122,16 +127,19 @@ class rule:
     
 def main():
     
-    num_rules = 2
-    rule_data = [
-    [1, 0, 3, 3, 3, None, None, None, 'stronglyAgainstYou', 'notAtAll', -1, -1, -1, -1],\
-    [2, 3, 1, 1, 1, 'yes', 'every', 'notAtAll', 'stronglyWithYou', 'notAtAll', 2, 1, 1, 2]
-    ]
+    num_rules = 20
+    rule_data = pd.read_excel(r'C:\Users\kamet\Dropbox (GaTech)\Summer 2018\CS 6795\Project1\CS6795-project1\Rules.xlsx')
+    rule_data = rule_data.where((pd.notnull(rule_data)), None)
+    rule_data = rule_data.as_matrix()
     
     rules = queue.PriorityQueue()
     
-    currEnv = env('yes', 'every', 'notAtAll', 'stronglyAgainstYou', 'notAtAll')
-    currStatus = status(0, 0, 0, 0)
+    currEnv = env('yes', 'all', 'notAtAll', 'stronglyAgainstYou', 'notAtAll')
+    opinion = input('opinion : ')
+    confidence_level = input('input confidence_level : ')
+    attention_level = input('input attention_level : ')
+    interest_level = input('input interest_level : ')
+    currStatus = status(int(confidence_level), int(attention_level), int(interest_level), int(opinion))
     print(currStatus)
     
     
@@ -145,6 +153,8 @@ def main():
 
     while not rules.empty():
         curr_rule = rules.get()
+        if curr_rule.score == 0:
+            break
         curr_rule.isUsed = True
         print('Rule {} fired now in priority queue \n'.format(curr_rule.ID))
         print(curr_rule)
@@ -160,9 +170,150 @@ def main():
         rules = tmp_rules
         
     return currStatus.check()
+    
+def runCase(rule_data, num_rules, currEnv, currStatus, debug):
+
+    rules = queue.PriorityQueue()
+    
+    for i in range(0,num_rules):
+        curr_rule = rule(rule_data[i][0], rule_data[i][1], rule_data[i][2], \
+        rule_data[i][3], rule_data[i][4], rule_data[i][5], rule_data[i][6], \
+        rule_data[i][7], rule_data[i][8], rule_data[i][9], rule_data[i][10], \
+        rule_data[i][11], rule_data[i][12], rule_data[i][13])
+        curr_rule.computeScore(currStatus, currEnv)
+        rules.put(curr_rule)
+
+    while not rules.empty():
+        curr_rule = rules.get()
+        if curr_rule.score == 0:
+            break
+        curr_rule.isUsed = True
+        #print('Rule {} fired now in priority queue \n'.format(curr_rule.ID))
+        #print(curr_rule)
+        currStatus.change(curr_rule)
+        #print(currStatus)
+        tmp_rules = queue.PriorityQueue()
+        #print("Remaining Rules in priority queue \n")
+        while not rules.empty():
+            tmp_rule = rules.get()
+            #print(tmp_rule)
+            tmp_rule.computeScore(currStatus, currEnv)
+            tmp_rules.put(tmp_rule)
+        rules = tmp_rules
+    return currStatus.check()
+    
+def runCases():
+    debug = True
+    
+    '''
+    q1 = ['yes', 'no', 'cantSay']
+    q2 = ['all', 'sortedByLikes', 'sampledBothSidesOfArgument', 'unsorted', 'never']
+    q3 = ['notAtAll', 'little', 'neutral', 'quite', 'very']
+    q4 = ['stronglyAgainstYou', 'againstYou', 'neutral', 'withYou', 'stronglyWithYou']
+    q5 = ['notAtAll', 'little', 'neutral', 'quite', 'very']
+    '''
+    '''
+    based on the rules, people changed their opinion only when 
+    q1 = ['no']
+    q3 = ['notAtAll']
+    q4 = ['stronglyAgainstYou']
+    q5 = ['very']
+    '''
+    q1 = ['no']
+    q2 = ['all', 'sampledBothSidesOfArgument']
+    q3 = ['notAtAll']
+    q4 = ['stronglyAgainstYou']
+    q5 = ['very']
+    
+    num_rules = 97
+    rule_data = pd.read_excel(r'C:\Users\kamet\Dropbox (GaTech)\Summer 2018\CS 6795\Project1\CS6795-project1\Rules.xlsx', sheetname='Final')
+    rule_data = rule_data.where((pd.notnull(rule_data)), None)
+    rule_data = rule_data.as_matrix()
+    
+    case_num = 0
+    change_case_num = 0
+    result_before = []
+    result_after = []
+    for opinion in range(-2,3):
+        for confidence_level in range(0,3):
+            for attention_level in range (0,3):
+                for interest_level in range (0,3):
+                    for q1_answer in q1:
+                        for q2_answer in q2:
+                            for q3_answer in q3:
+                                for q4_answer in q4:
+                                    for q5_answer in q5:
+                                        initEnv = env(q1_answer, q2_answer, q3_answer, q4_answer, q5_answer)
+                                        currEnv = env(q1_answer, q2_answer, q3_answer, q4_answer, q5_answer)
+                                        initStatus = status(confidence_level, attention_level, interest_level, opinion)
+                                        currStatus = status(confidence_level, attention_level, interest_level, opinion)
+                                        if runCase(rule_data, num_rules, currEnv, currStatus, debug) == "Opinion Changed!":
+                                            print('case_num = {}, condition = {} {} {} {} {} {} {} {} {}'.format(case_num, opinion, confidence_level, attention_level, interest_level, q1_answer,q2_answer,q3_answer,q4_answer,q5_answer))
+                                            change_case_num += 1
+                                            result_before.append([initEnv, initStatus])
+                                            result_after.append([currEnv, currStatus])
+                                        else:
+                                            a = 2
+                                            #print('case_num = {}, condition = {} {} {} {} {} {} {} {} {}'.format(case_num, opinion, confidence_level, attention_level, interest_level, q1_answer,q2_answer,q3_answer,q4_answer,q5_answer))      
+                                        case_num += 1
+    ##print
+    print('total # of cases = {}, cases when a person changes an opinion = {}'.format(case_num, change_case_num))                
+    return (result_before, result_after) 
+    
+def sort(result, sortType, beforeAfter):
+    if beforeAfter == 'before':
+        currResult = result[0]
+    else:
+        currResult = result[1]
+    
+    lowCount, midCount, highCount = 0, 0, 0
+    strDisagrCount, disagrCount, neutralCount, agrCount, strAgrCount =0, 0, 0, 0, 0
+    if sortType == 'confidence_level':
+        for res in currResult:
+            print(res[1])
+            if res[1].cLevel == 0:
+                lowCount += 1
+            elif res[1].cLevel == 1:
+                midCount += 1
+            elif res[1].cLevel == 2:
+                highCount += 1
+        print('Summary\n lowCount = {}, midCount = {}, highCount = {}'.format(lowCount, midCount, highCount))
+    if sortType == 'attention_level':
+        for res in currResult:
+            if res[1].aLevel == 0:
+                lowCount += 1
+            elif res[1].aLevel == 1:
+                midCount += 1
+            elif res[1].aLevel == 2:
+                highCount += 1
+        print('Summary\n lowCount = {}, midCount = {}, highCount = {}'.format(lowCount, midCount, highCount))
+    if sortType == 'interest_level':
+        for res in currResult:
+            if res[1].iLevel == 0:
+                lowCount += 1
+            elif res[1].iLevel == 1:
+                midCount += 1
+            elif res[1].iLevel == 2:
+                highCount += 1
+        print('Summary\n lowCount = {}, midCount = {}, highCount = {}'.format(lowCount, midCount, highCount))
+    if sortType == 'opinion':
+        for res in currResult:
+            if res[1].opinion == -2:
+                strDisagrCount +=1
+            elif res[1].opinion == -1:
+                disagrCount +=1
+            elif res[1].opinion == 0:
+                neutralCount +=1
+            elif res[1].opinion == 1:
+                agrCount +=1
+            elif res[1].opinion == 2:
+                strAgrCount +=1
+        print('Summary\n strDisagrCount = {}, disagrCount = {}, neutralCount = {}, disagrCount = {}, neutralCount = {}'.format(strDisagrCount, disagrCount, neutralCount, agrCount, strAgrCount))      
+              
         
 if __name__ == "__main__":
-    isOpinionChanged = main()
-    print(isOpinionChanged)
+    #isOpinionChanged = main()
+    #print(isOpinionChanged)  
+    result = runCases()  
 
 
