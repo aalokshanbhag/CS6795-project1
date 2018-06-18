@@ -152,7 +152,7 @@ def main():
     Note:
         This is the main function to be run
     '''
-    num_rules = 97
+    num_rules = 95
     rule_data = pd.read_excel(r'Rules.xlsx', sheetname='Final')
     #rule_data = pd.read_excel(r'C:\Users\kamet\Dropbox (GaTech)\Summer 2018\CS 6795\Project1\CS6795-project1\Rules.xlsx', sheetname='Final')
     rule_data = rule_data.where((pd.notnull(rule_data)), None)
@@ -273,7 +273,7 @@ def runCases():
     q4 = ['againstYou','stronglyAgainstYou']
     q5 = ['very']
     
-    num_rules = 97
+    num_rules = 95
     rule_data = pd.read_excel(r'Rules.xlsx', sheetname='Final')
     #rule_data = pd.read_excel(r'C:\Users\kamet\Dropbox (GaTech)\Summer 2018\CS 6795\Project1\CS6795-project1\Rules.xlsx', sheetname='Final')
     rule_data = rule_data.where((pd.notnull(rule_data)), None)
