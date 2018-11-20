@@ -1,3 +1,7 @@
+
+Team: Aalok Shanbhag, Hiromasa Kamezawa
+Our aim in this project is to study the cognitive processes that cause this change of opinion and build a computational rules based model that can simulate human behavior. 
+ 
 This file has 
  - prev_ver_scr which contains previous versions of sourse codes
  - __init__.py which is the final version of the source code
